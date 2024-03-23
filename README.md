@@ -4,6 +4,7 @@ This script will extract Pardot Visitor Activity, and load it into a Salesforce 
 ## Maintenance
 
 ### Changing Connected App Credentials
+Uhh, I'll write this soon
 
 ## Set Up
 There are a few things that will need to be set up in Salesforce for this solution to work.
