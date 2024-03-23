@@ -1,16 +1,17 @@
-LOGIN_URL='https://cordialinc.my.salesforce.com'
-CONSUMER_KEY='3MVG9zlTNB8o8BA0V5CqSBJXecQixSPvSivohjKAzSzchWofZNrRg1fpGaDanCrLrx5yrV5lRkK7gBMsiVoIt'
-CONSUMER_SECRET='186EB17F9072AC54A88B0A5E6E71ECF69215A15222F84237AA6A7BC2C1C10C6F'
-BUSINESS_UNIT_ID='0Uvf40000004CcUCAU'
-
-DAYS_AGO=3650 # only used on the 1st run
-
-SALESFORCE_OBJECT='Pardot_Activity__c'
-
 from simple_salesforce import Salesforce
 import numpy as np
-import json, pandas, requests
+import os, pandas, requests
 from datetime import date, datetime, timedelta
+
+# read values from the environment
+LOGIN_URL=os.environ['LOGIN_URL'] #https://cordialinc.my.salesforce.com'
+CONSUMER_KEY=os.environ['CONSUMER_KEY'] #'3MVG9zlTNB8o8BA0V5CqSBJXecQixSPvSivohjKAzSzchWofZNrRg1fpGaDanCrLrx5yrV5lRkK7gBMsiVoIt'
+CONSUMER_SECRET=os.environ['CONSUMER_SECRET'] #'186EB17F9072AC54A88B0A5E6E71ECF69215A15222F84237AA6A7BC2C1C10C6F'
+BUSINESS_UNIT_ID=os.environ['BUSINESS_UNIT_ID'] #'0Uvf40000004CcUCAU'
+
+DAYS_AGO=os.environ['DAYS_AGO'] #3650 # only used on the 1st run
+
+SALESFORCE_OBJECT='Pardot_Activity__c'
 
 # retrieve access token from Salesforce
 access_token_response = requests.post(
