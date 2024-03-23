@@ -4,12 +4,24 @@ This script will extract Pardot Visitor Activity, and load it into a Salesforce 
 ## Maintenance
 
 ### Changing Connected App Credentials
-Uhh, I'll write this soon
+If it is suspected the Consumer Key and Secret have been compromised, or you simply want to rotate/change them, follow these steps:
+1. In Salesforce Setup, go to **App Manager**
+1. Locate the Connected app, likely called `Pardot Script Integration`, use the arrow at the left to **View** the App.
+1. Click on **Manage Consumer Details**, causing a Pop up to appear asking for MFA
+1. Under **Staged Consumer Details**, click the **Generate** button.
+1. Click the **Apply** button to put these in place.
+
+Next, we will need to tell Heroku that the values changed.
+1. Log in to Heroku, navigate to the App you need to update
+1. From the App's **Overview** page, click **Settings**
+1. Click **Reveal Config Vars**
+1. Using the pencil icon next to the 2 `CONSUMER_` Vars, update the **Value** with what Salesforce generated. Click **Save changes** for each one.
+1. (recommended) Test by running the script Ad hoc, steps below.
 
 ### Ad hoc script execution
 If for whatever reason you want to run the script manually, follow these steps:
 1. Log in to Heroku, navigate to the App you want to run
-1. From the App's **Overview** tab, click **Configure Add-ons**
+1. From the App's **Overview** page, click **Configure Add-ons**
 1. Click **Advanced Scheduler**
 1. Near **Triggers**, look at the right for a **More** button-link
 1. Click **Execute Trigger**, then **Confirm**
