@@ -6,6 +6,19 @@ This script will extract Pardot Visitor Activity, and load it into a Salesforce 
 ### Changing Connected App Credentials
 Uhh, I'll write this soon
 
+### Ad hoc script execution
+If for whatever reason you want to run the script manually, follow these steps:
+1. Log in to Heroku, navigate to the App you want to run
+1. From the App's **Overview** tab, click **Configure Add-ons**
+1. Click **Advanced Scheduler**
+1. Near **Triggers**, look at the right for a **More** button-link
+1. Click **Execute Trigger**, then **Confirm**
+1. Close the Browser tab
+1. Back at the Heroku App page, click the **More** button at the top right
+1. Click **View logs**.
+
+Once the script is done running, you should see `Process exited with status 0` with a successful run. If you don't, there's some troubleshooting to be done, and hopefully there is an error message above that gives you a hint.
+
 ## Set Up
 There are a few things that will need to be set up in Salesforce for this solution to work.
 
