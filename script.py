@@ -86,7 +86,7 @@ if visitorActivityCount == 0:
   print('There are no activity records to process today')
   exit(0)
 
-print('Done getting {visitorActivityCount} records from Pardot')
+print(f'Done getting {visitorActivityCount} records from Pardot')
 
 print('Starting to Transform and Process the data collected')
 # map some of the data if required
@@ -125,11 +125,12 @@ dataframe = dataframe.rename(columns={
 dataframe['Lead__c'] = dataframe.apply(lambda x: x['prospect_salesforceId'] if x['prospect_salesforceId'].startswith('00Q') else None, axis=1)
 dataframe['Contact__c'] =  dataframe.apply(lambda x: x['prospect_salesforceId'] if x['prospect_salesforceId'].startswith('003') else None, axis=1)
 # get rid of columns we don't want anymore
-dataframe = dataframe.drop(['prospectId','prospect_salesforceId'], axis=1)
+dataframe = dataframe.drop(['prospectId','prospect_salesforceId','campaign'], axis=1)
 dataframe['Pardot_CampaignID__c'] = dataframe['Pardot_CampaignID__c'].astype('Int64')
+# print(dataframe.head())
 # print(dataframe.head().to_dict(orient='records'))
 
-print('Transformations complete, starting to send data to Salesforce')
+print(f'Transformations complete, starting to send {len(dataframe)} records to Salesforce')
 
 # Send our results to Salesforce
 sdf = dataframe.fillna(np.nan).replace([np.nan], [None])
