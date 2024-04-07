@@ -81,13 +81,14 @@ while needToMakeQuery:
   else:
     needToMakeQuery=False
 
-if len(all_query_data) == 0:
+visitorActivityCount = len(all_query_data)
+if visitorActivityCount == 0:
   print('There are no activity records to process today')
   exit(0)
 
-print('Done getting records from Pardot')
+print('Done getting {visitorActivityCount} records from Pardot')
 
-
+print('Starting to Transform and Process the data collected')
 # map some of the data if required
 dataframe = pandas.json_normalize(all_query_data, sep='_') # throw collected data into Dataframe
 # drop records that have no SalesforceId
@@ -128,8 +129,11 @@ dataframe = dataframe.drop(['prospectId','prospect_salesforceId'], axis=1)
 dataframe['Pardot_CampaignID__c'] = dataframe['Pardot_CampaignID__c'].astype('Int64')
 # print(dataframe.head().to_dict(orient='records'))
 
+print('Transformations complete, starting to send data to Salesforce')
 
 # Send our results to Salesforce
 sdf = dataframe.fillna(np.nan).replace([np.nan], [None])
 list_of_records = sdf.to_dict(orient='records')
 sf.bulk.Pardot_Activity__c.insert(list_of_records)
+
+print('Data sent to Salesforce. Script completed successfully')
