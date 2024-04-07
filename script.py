@@ -90,6 +90,8 @@ print('Done getting records from Pardot')
 
 # map some of the data if required
 dataframe = pandas.json_normalize(all_query_data, sep='_') # throw collected data into Dataframe
+# drop records that have no SalesforceId
+dataframe.dropna(subset=['prospect_salesforceId'], inplace=True)
 # print('before manipulations')
 # print(dataframe.head(10))
 
