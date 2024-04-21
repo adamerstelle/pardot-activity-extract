@@ -29,17 +29,17 @@ authHeaders = {
 }
 sf = Salesforce(session_id=oauth_token["access_token"], instance_url=LOGIN_URL)
 
+lastTimestamp=None
 
 # get the last visitor activity from Salesforce
-soqlQuery = 'SELECT MAX(Activity_Id__c) FROM Pardot_Activity__c'
+soqlQuery = 'SELECT MAX(CreatedDate) FROM Pardot_Activity__c'
 queryResponse = sf.query(soqlQuery)
 
 if queryResponse['done']:
-  lastId = int(queryResponse['records'][0]['expr0'])
-  print(f'Using Id {lastId} from Salesforce')
+  lastTimestamp = queryResponse['records'][0]['expr0']
+  print(f'Using Timestamp: "{lastTimestamp}" from Salesforce')
 else:
-  print(f'Could not find lastId from Salesforce, assuming first run')
-  lastId= None
+  print(f'Could not find lastTimestamp from Salesforce, assuming first run')
 
 
   # get the data from the Visitor Activity Query API
@@ -52,19 +52,21 @@ queryParams= {
     'fields':'id,campaignId,campaign.name,campaign.salesforceId,details,prospectId,prospect.salesforceId,typeName,type,createdAt',
     'prospectIdGreaterThan': 1
 }
-if lastId==None:
+if lastTimestamp==None:
   print(f'We cant tell what the last run id was, going back {DAYS_AGO} days')
   targetDate = date.today() - timedelta(days=DAYS_AGO)
   queryParams['updatedAtAfterOrEqualTo'] = targetDate.isoformat() + 'T00:00:00-04:00'
 else:
   print('Resuming from the last gathered VisitorActivity record')
-  queryParams['idGreaterThan']=lastId
+  queryParams['updatedAtAfterOrEqualTo']=lastTimestamp
 
-apiCallsMade=0
+batchApiCallsMade=0
+totalApiCallsMade=0
 
 while needToMakeQuery:
-  apiCallsMade +=1
-  print(f'Req: {apiCallsMade} - making GET request to: {queryUrl}')
+  batchApiCallsMade +=1
+  totalApiCallsMade +=1
+  print(f'Batch: {batchApiCallsMade} - Total {totalApiCallsMade} - making GET request to: {queryUrl}')
   query_response = requests.get(
       url=queryUrl,
       params=queryParams,
@@ -78,8 +80,19 @@ while needToMakeQuery:
     queryUrl = query_response['nextPageUrl']
     queryParams={} # clear the params out, as it is built into nextPageUrl
     # print('Making another API call to get more Visitor Activity Records')
+  elif len(query_response['values']) == 1000:
+    queryUrl='https://pi.pardot.com/api/v5/objects/visitor-activities'
+    queryParams={
+      'limit': 1000,
+      'fields':'id,campaignId,campaign.name,campaign.salesforceId,details,prospectId,prospect.salesforceId,typeName,type,createdAt,updatedAt',
+      'prospectIdGreaterThanOrEqualTo': 2,
+      'orderBy':'updatedAt',
+      'updatedAtAfterOrEqualTo': all_query_data[len(all_query_data) -1]['updatedAt']
+    }
+    batchApiCallsMade=0
   else:
     needToMakeQuery=False
+    print(f'there was no nextPageUrl and the len was: {len(query_response["values"])}')
 
 visitorActivityCount = len(all_query_data)
 if visitorActivityCount == 0:
@@ -91,6 +104,7 @@ print(f'Done getting {visitorActivityCount} records from Pardot')
 print('Starting to Transform and Process the data collected')
 # map some of the data if required
 dataframe = pandas.json_normalize(all_query_data, sep='_') # throw collected data into Dataframe
+dataframe.drop_duplicates()
 # drop records that have no SalesforceId
 dataframe.dropna(subset=['prospect_salesforceId'], inplace=True)
 # print('before manipulations')
@@ -125,7 +139,7 @@ dataframe = dataframe.rename(columns={
 dataframe['Lead__c'] = dataframe.apply(lambda x: x['prospect_salesforceId'] if x['prospect_salesforceId'].startswith('00Q') else None, axis=1)
 dataframe['Contact__c'] =  dataframe.apply(lambda x: x['prospect_salesforceId'] if x['prospect_salesforceId'].startswith('003') else None, axis=1)
 # get rid of columns we don't want anymore
-dataframe = dataframe.drop(['prospectId','prospect_salesforceId','campaign'], axis=1)
+dataframe = dataframe.drop(['prospectId','prospect_salesforceId','campaign','updatedAt'], axis=1)
 dataframe['Pardot_CampaignID__c'] = dataframe['Pardot_CampaignID__c'].astype('Int64')
 # print(dataframe.head())
 # print(dataframe.head().to_dict(orient='records'))
@@ -135,6 +149,6 @@ print(f'Transformations complete, starting to send {len(dataframe)} records to S
 # Send our results to Salesforce
 sdf = dataframe.fillna(np.nan).replace([np.nan], [None])
 list_of_records = sdf.to_dict(orient='records')
-sf.bulk.Pardot_Activity__c.insert(list_of_records)
+getattr(sf.bulk, SALESFORCE_OBJECT).upsert(list_of_records,'Activity_Id__c',batch_size=10000,use_serial=True)
 
 print('Data sent to Salesforce. Script completed successfully')
