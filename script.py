@@ -36,7 +36,7 @@ soqlQuery = 'SELECT MAX(CreatedDate) FROM Pardot_Activity__c'
 queryResponse = sf.query(soqlQuery)
 
 if queryResponse['done']:
-  lastTimestamp = queryResponse['records'][0]['expr0']
+  lastTimestamp = queryResponse['records'][0]['expr0'].replace('.000+0000','+00:00')
   print(f'Using Timestamp: "{lastTimestamp}" from Salesforce')
 else:
   print(f'Could not find lastTimestamp from Salesforce, assuming first run')
