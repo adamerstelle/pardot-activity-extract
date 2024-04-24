@@ -150,7 +150,7 @@ dataframe = dataframe.rename(columns={
 dataframe['Lead__c'] = dataframe.apply(lambda x: x['prospect_salesforceId'] if x['prospect_salesforceId'].startswith('00Q') else None, axis=1)
 dataframe['Contact__c'] =  dataframe.apply(lambda x: x['prospect_salesforceId'] if x['prospect_salesforceId'].startswith('003') else None, axis=1)
 # get rid of columns we don't want anymore
-dataframe = dataframe.drop(['prospectId','prospect_salesforceId','campaign','updatedAt'], axis=1)
+dataframe = dataframe.drop(['prospectId','prospect_salesforceId','campaign','updatedAt'], axis=1, errors='ignore')
 dataframe['Pardot_CampaignID__c'] = dataframe['Pardot_CampaignID__c'].astype('Int64')
 # print(dataframe.head())
 # print(dataframe.head().to_dict(orient='records'))
