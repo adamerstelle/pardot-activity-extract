@@ -30,9 +30,10 @@ authHeaders = {
 sf = Salesforce(session_id=oauth_token["access_token"], instance_url=LOGIN_URL)
 
 lastTimestamp=None
+lastActivityId=None
 
-# get the last visitor activity from Salesforce
-soqlQuery = 'SELECT MAX(CreatedDate) FROM Pardot_Activity__c'
+# get the last visitor activity timestamp from Salesforce
+soqlQuery = f'SELECT MAX(CreatedDate) FROM {SALESFORCE_OBJECT}'
 queryResponse = sf.query(soqlQuery)
 
 if queryResponse['done']:
@@ -40,6 +41,16 @@ if queryResponse['done']:
   print(f'Using Timestamp: "{lastTimestamp}" from Salesforce')
 else:
   print(f'Could not find lastTimestamp from Salesforce, assuming first run')
+
+# get the last visitor activity id from Salesforce (so we know when to update vs insert)
+soqlQuery = 'SELECT MAX(Activity_Id__c) FROM {SALESFORCE_OBJECT}'
+queryResponse = sf.query(soqlQuery)
+
+if queryResponse['done']:
+  lastActivityId = queryResponse['records'][0]['expr0']
+  print(f'Using lastActivityId: "{lastActivityId}" from Salesforce')
+else:
+  print(f'Could not find lastActivityId from Salesforce, assuming first run')
 
 
   # get the data from the Visitor Activity Query API
@@ -148,7 +159,20 @@ print(f'Transformations complete, starting to send {len(dataframe)} records to S
 
 # Send our results to Salesforce
 sdf = dataframe.fillna(np.nan).replace([np.nan], [None])
-list_of_records = sdf.to_dict(orient='records')
-getattr(sf.bulk, SALESFORCE_OBJECT).upsert(list_of_records,'Activity_Id__c',batch_size=10000,use_serial=True)
+
+insertDf = sdf[sdf.Activity_Id__c > lastActivityId]
+if len(insertDf) > 0:
+  print(f'inserting {len(insertDf)} records')
+  insertRecords = insertDf.to_dict(orient='records')
+  getattr(sf.bulk, SALESFORCE_OBJECT).insert(insertRecords,batch_size=10000,use_serial=True)
+  print('insert complete')
+
+updateDf = sdf[sdf.Activity_Id__c <= lastActivityId]
+if len(updateDf) > 0:
+  updateDf.drop(['CreatedDate'], axis=1)
+  print(f'updating {len(updateDf)} records')
+  updateRecords = updateDf.to_dict(orient='records')
+  getattr(sf.bulk, SALESFORCE_OBJECT).upsert(updateRecords,'Activity_Id__c',batch_size=10000,use_serial=True)
+  print('update complete')
 
 print('Data sent to Salesforce. Script completed successfully')
