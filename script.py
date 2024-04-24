@@ -49,7 +49,7 @@ queryUrl='https://pi.pardot.com/api/v5/objects/visitor-activities'
 queryParams= {
     'limit': 1000,
     #'fields':'id,campaignId,campaign.name,customRedirectId,customRedirect.name,details,emailId,emailTemplateId,emailTemplate.name,email.name,fileId,file.name,formHandlerId,formHandler.name,formId,form.name,landingPageId,landingPage.name,listEmailId,listEmail.name,multivariateTestVariationId,paidSearchAdId,prospectId,prospect.salesforceId,siteSearchQueryId,typeName,type,updatedAt,visitId,visitorId'
-    'fields':'id,campaignId,campaign.name,campaign.salesforceId,details,prospectId,prospect.salesforceId,typeName,type,createdAt',
+    'fields':'id,campaignId,campaign.name,campaign.salesforceId,details,prospectId,prospect.salesforceId,typeName,type,createdAt,updatedAt',
     'prospectIdGreaterThan': 1
 }
 if lastTimestamp==None:
