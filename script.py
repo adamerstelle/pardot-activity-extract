@@ -43,7 +43,7 @@ else:
   print(f'Could not find lastTimestamp from Salesforce, assuming first run')
 
 # get the last visitor activity id from Salesforce (so we know when to update vs insert)
-soqlQuery = 'SELECT MAX(Activity_Id__c) FROM {SALESFORCE_OBJECT}'
+soqlQuery = f'SELECT MAX(Activity_Id__c) FROM {SALESFORCE_OBJECT}'
 queryResponse = sf.query(soqlQuery)
 
 if queryResponse['done']:
